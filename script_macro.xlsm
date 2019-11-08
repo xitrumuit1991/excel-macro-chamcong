@@ -1,0 +1,192 @@
+Function DuplicateWorkBook()
+     'auto duplicate workbook
+    Dim x As String, y As String, myPath As String, myOutput As String, fulPathName As String
+    Dim charSeperate As String
+    charSeperate = "\"      ' "/" MacOs  "\" Window
+    
+    myPath = ActiveWorkbook.fullName
+    myOutput = Right(myPath, Len(myPath) - InStrRev(myPath, "."))
+    XPath = ActiveWorkbook.Path
+    YName = "KHONG_XOA" & Format(Now(), "dd-mm-yyyy") & "." & myOutput
+    fulPathName = XPath & charSeperate & YName
+    MsgBox ("Backup File at Path= " & fulPathName)
+    'ActiveWorkbook.SaveAs (fulPathName)
+    ActiveWorkbook.SaveCopyAs (fulPathName)
+End Function
+Function ProtectSheetWithPassword()
+    'Khoa sheet
+    ActiveSheet.Cells.Locked = False
+    ActiveSheet.Columns("A").Locked = True
+    ActiveSheet.Columns("B").Locked = True
+    ActiveSheet.Columns("C").Locked = True
+    ActiveSheet.Columns("D").Locked = True
+    ActiveSheet.Columns("E").Locked = True
+    ActiveSheet.Columns("F").Locked = True
+    ActiveSheet.Protect ("thungan1993")
+End Function
+
+
+
+Sub Button2_Click()
+    Dim maso As String
+    Dim N As Long, i As Long, j As Long, dd As Long
+    Dim nowDate As String
+    N = Cells(Rows.Count, "A").End(xlUp).Row
+    nowDate = Format(Now(), "dd/mm/yyyy")
+    'MsgBox N
+
+    maso = InputBox("CheckIn: Nhap vao ma so!", "Exam Results", , 50, 50)
+    Do While maso = ""
+        maso = InputBox("CheckIn: Nhap vao ma so!", "Exam Results", , 50, 50)
+    Loop
+    
+    'ActiveWorkbook.Sheets.Copy
+    ActiveSheet.Unprotect ("thungan1993")
+    
+    'Loop to Max column A, then check date is the pass Date,
+    'If Yes (the pass Date), then deleteCell & shiftUp Cell with colum A->F
+    For dd = N To 1 Step -1
+    
+       If Cells(dd, "D") <> "" And Cells(dd, "D") <> "Date" Then
+             Dim vD As String, cellDate As String, dNowDate As String
+             Dim vMaso As String, vcheckInTime As String
+             vMaso = Cells(dd, "C")
+             vcheckInTime = Cells(dd, "E")
+             dNowDate = Format(Now(), "yyyy-mm-dd")
+             vD = Cells(dd, "D")
+             cellDate = Right(vD, 4) & "-" & Mid(vD, 4, 2) & "-" & Left(vD, 2)
+             
+             If vMaso <> "" And cellDate < dNowDate And vcheckInTime <> "" Then
+                'MsgBox "Delete row and ShiftUp index=" & dd & ". Date=" & cellDate
+                Range("A" & dd).Delete Shift:=xlUp
+                Range("B" & dd).Delete Shift:=xlUp
+                Range("C" & dd).Delete Shift:=xlUp
+                Range("D" & dd).Delete Shift:=xlUp
+                Range("E" & dd).Delete Shift:=xlUp
+                Range("F" & dd).Delete Shift:=xlUp
+            End If
+        End If
+       
+    Next dd
+    
+    
+    N = Cells(Rows.Count, "A").End(xlUp).Row
+    For i = 42 To 2 Step -1
+        Dim oneMaso As String, checkInTime As String, checkinDate As String, hoten As String
+        oneMaso = Cells(i, "P").Value
+        hoten = Cells(i, "O").Value
+        
+        If oneMaso = maso Then
+            'MsgBox oneMaso
+            'MsgBox hoten
+            For j = N To 1 Step -1
+                If Cells(j, "C") = maso And Cells(j, "D") = nowDate And Cells(j, "E") <> "" Then
+                    MsgBox "THONG BAO:" & hoten & " da checkIn ngay hom nay roi. Ngay " & nowDate
+                    
+                    'Khoa sheet
+                    ProtectSheetWithPassword
+                    'save
+                    ActiveWorkbook.Save
+                     'auto duplicate workbook
+                    DuplicateWorkBook
+                    Exit Sub
+                Else
+                    ActiveSheet.Unprotect ("thungan1993")
+                    
+                    Cells(N + 1, "A").Value = N
+                    Cells(N + 1, "B").Value = hoten
+                    Cells(N + 1, "C").Value = maso
+                    
+                    'You may also be able to use the .NumberFormat property of the range.
+                    'For example, if your date you want formatted as dd/mm/yyyy is in cell A1 you could use Range("A1").NumberFormat = "dd/mm/yyyy".
+                    'I'm not sure how (or why) this differs from Format though, just a suggestion that might help.
+                    Cells(N + 1, "D").Value = Format(Now(), "dd/mm/yyyy")
+                    Cells(N + 1, "D").NumberFormat = "dd/mm/yyyy"
+                    
+                    Cells(N + 1, "E").Value = Format(Now(), "hh:mm:ss")
+                    Cells(N + 1, "F").Value = ""
+                    MsgBox hoten & " da checkIn thanh cong. Ngay " & nowDate
+                    
+                    'Khoa sheet
+                    ProtectSheetWithPassword
+                    
+                    'save
+                    ActiveWorkbook.Save
+                    
+                     'auto duplicate workbook
+                    DuplicateWorkBook
+                    Exit Sub
+                End If
+            Next j
+            
+        End If
+    Next i
+    
+    'Khoa sheet
+    ProtectSheetWithPassword
+    'save
+     ActiveWorkbook.Save
+      'auto duplicate workbook
+    DuplicateWorkBook
+    
+End Sub
+Sub Button3_Click()
+    Dim maso As String
+    Dim N As Long, i As Long, j As Long
+    Dim nowDate As String
+    N = Cells(Rows.Count, "A").End(xlUp).Row
+    nowDate = Format(Now(), "dd/mm/yyyy")
+    'MsgBox N
+
+    maso = InputBox("Nhap vao ma so de checkout!", "Exam Results", , 50, 50)
+    Do While maso = ""
+        maso = InputBox("Nhap vao ma so de checkout!", "Exam Results", , 50, 50)
+    Loop
+    
+    ActiveSheet.Unprotect ("thungan1993")
+    
+    For i = 42 To 2 Step -1
+        Dim oneMaso As String, hoten As String
+        oneMaso = Cells(i, "P").Value
+        hoten = Cells(i, "O").Value
+        
+        If oneMaso = maso Then
+            'MsgBox oneMaso
+            'MsgBox hoten
+            For j = N To 1 Step -1
+                If Cells(j, "C") = maso And Cells(j, "D") = nowDate And Cells(j, "F") <> "" Then
+                    MsgBox "THONG BAO:" & hoten & " da checkout ngay hom nay roi. Ngay " & nowDate
+                    
+                    'Khoa sheet
+                    ProtectSheetWithPassword
+                    'save
+                    ActiveWorkbook.Save
+                     'auto duplicate workbook
+                    DuplicateWorkBook
+                    Exit Sub
+                ElseIf Cells(j, "C") = maso And Cells(j, "D") = nowDate And Cells(j, "F") = "" Then
+                    ActiveSheet.Unprotect ("thungan1993")
+                    
+                    Cells(j, "F").Value = Format(Now(), "hh:mm:ss")
+                    MsgBox hoten & " da checkout thanh cong. Ngay " & nowDate
+                    
+                    'Khoa sheet
+                    ProtectSheetWithPassword
+                    'save
+                    ActiveWorkbook.Save
+                     'auto duplicate workbook
+                    DuplicateWorkBook
+                    Exit Sub
+                End If
+            Next j
+            
+        End If
+    Next i
+    
+    'Khoa sheet
+    ProtectSheetWithPassword
+    'save
+    ActiveWorkbook.Save
+     'auto duplicate workbook
+    DuplicateWorkBook
+End Sub
