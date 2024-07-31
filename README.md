@@ -6,7 +6,17 @@ excel-macro-chamcong
 Language macro
 ```
 
-# Password File ChiaViec
+# Password File PhanCongCongViec
 ```
 xuatkhau
+```
+
+# Password File Chia Viec
+```
+115599
+```
+
+# Password File Nhan Viec
+```
+115599
 ```
