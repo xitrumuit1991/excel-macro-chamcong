@@ -1,4 +1,3 @@
-```javascript
 Sub CheckAndMakeSureSheetNameExistedInRemote(RemoteFile, sheetName)
     ' Add code here
     Dim existsSheetSwiftChung As Boolean
@@ -223,5 +222,3 @@ Selection.End(xlDown).Select
 Application.DisplayAlerts = True
 Application.ScreenUpdating = True
 End Sub
-
-```
