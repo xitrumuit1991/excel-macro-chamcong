@@ -58,6 +58,191 @@ Function GetLastColumnsBySheetName(fileWorkbook, sheetName, rowIndex) As Integer
 GetLastColumnsBySheetName = fileWorkbook.Worksheets(sheetName).Cells(rowIndex, Columns.Count).End(xlToLeft).Column
      
 End Function
+
+Function GetRowIndexByRefId(fileWorkbook, refIdString, sheetName) As Integer
+    foundIdx = -1
+    If refIdString = "" Or refIdString = vbNullString Then
+        GetRowIndexByRefId = -1
+        Exit Function
+    End If
+    
+    LastRowSwiftCaNhan = fileWorkbook.Worksheets(sheetName).Cells(Cells.Rows.Count, "A").End(xlUp).row
+    For idx = 2 To LastRowSwiftCaNhan
+            refIdValue = fileWorkbook.Worksheets(sheetName).Range("A" & idx).Value
+            If refIdValue <> "" And refIdString <> "" And refIdValue = refIdString Then
+                foundIdx = idx
+                'Exit For
+            End If
+            If foundIdx <> -1 Then Exit For
+    Next idx
+    GetRowIndexByRefId = foundIdx
+     
+End Function
+Sub ButtonTraSwift_Click()
+    PathFileRemote = "/Users/nguyen/Desktop/remote/remoteFileInDiskX.xlsx" 'File nam o X: EDITABLE
+    HardCodeEmployeeDung = "LQDung" 'Hardcode ten nhan vien cho the revert swift
+     SHEET_SWIFT_CHUNG = "SHEET_SWIFT_CHUNG" 'ten sheet Chung
+     SHEET_SWIFT_CA_NHAN = "SHEET_SWIFT_CA_NHAN" 'ten sheet Ca Nhan
+     'Set file nhan viec
+    Set RemoteFile = Workbooks.Open(PathFileRemote)
+    Set OutputFile = ThisWorkbook
+
+    'step 1 check employee Name (k phai  Dung moi dc allow)
+    'Check existed employeeName & set employeeName = Cell(a1)
+    employeeName = OutputFile.Sheets("NHAN VIEC").Range("A1").Value
+    If Len(employeeName) = 0 Or employeeName = "" Or employeeName = vbNullString Then
+        MsgBox "Chua nhap ten nhan vien"
+        Exit Sub
+    End If
+    
+    If employeeName = HardCodeEmployeeDung Then
+        MsgBox "Chuc nang khong kha dung voi ban"
+        Exit Sub
+    End If
+    
+    
+    'Step2:
+    LastRowSheetChung = GetLastRowsBySheetName(RemoteFile, SHEET_SWIFT_CHUNG)
+    LastRowSheetCaNhan = GetLastRowsBySheetName(OutputFile, SHEET_SWIFT_CA_NHAN)
+    For idx = 2 To LastRowSheetChung
+        transferFromValue = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("N" & idx).Value
+        transferToValue = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("O" & idx).Value
+        transferStatusValue = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("P" & idx).Value
+        refIdValue = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("A" & idx).Value
+        
+        '2.1 'Check existed  1 Transfer Swift roi =>check current employee phai la ng gui khong?
+        'Neu current employee = nguoi gui (cot O), check status?
+        If transferFromValue = employeeName Then 'Ban chinh la nguoi gui
+            '2.1.1 Neu status = PENDING => bao loi
+            If transferStatusValue = "PENDING" Then 'Trang thai dang pending (cho` ng nhan tra loi)
+                'IsAlreadyExistTransferSwift = True
+                MsgBox "Ban da gui di mot yeu cau transfer swift RefId (" & refIdValue & ") cho nguoi nhan (" & transferToValue & "). Hien tai trang thai la " & transferStatusValue & ". Vui long lien he nguoi nhan."
+                Exit Sub
+            End If
+            
+            '2.1.2 Neu status = APPROVE (nguoi nhan dong y) =>xoa refId trong sheetCaNhan & xoa 3 cot N, O, P (from, to ,status) trong sheetChung & update assigned nguoi nhan cho refId
+            If transferStatusValue = "APPROVE" Then 'Trang thai  APPROVE (ng nhan accept yeu cau)
+                
+                MsgBox "Nguoi nhan " & transferToValue & " da Dong Y yeu cau cua ban. RefId (" & refIdValue & ")"
+                
+                'Xoa refId nay duoi sheet ca nhan.
+                If idx >= 0 Then
+                    OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Rows(idx).Delete Shift:=xlUp
+                End If
+                
+                'Edit cot status = 'TRANSFER_COMPLETE' =>de nguoi nhan change Name & xoa 3 cot N O P
+                RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("N" & idx).Value = "" 'Xoa nguoi gui
+                RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("O" & idx).Value = "" 'Xoa nguoi nhan
+                RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("P" & idx).Value = "" 'Xoa status
+                RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("M" & idx).Value = transferToValue 'Update assigned
+                RemoteFile.Save
+                OutputFile.Save
+                MsgBox "Xoa RefId (" & refIdValue & ") tren file local thanh cong. Update thong tin Swift cho sheet Chung thanh cong. Thoat"
+                
+                Exit Sub
+            End If 'End 2.1.2
+            
+            '2.1.3 Bao loi voi nhung status khong xac dinh (vd REJECT, ...)
+            MsgBox "Dang co 1 Transfer Swift RefId (" & refIdValue & ") duoc gui tu ban voi trang thai " & transferStatusValue & ". Vui long kiem tra va xu ly"
+            Exit Sub
+            
+        End If 'End 2.1
+        
+        '2.2 'Neu currentEmployee = nguoi nhan, check status? (ban la ng nhan transfer swift)
+         If transferToValue = employeeName Then 'Ban chinh la nguoi nhan
+            '2.2.1
+            If transferStatusValue = "PENDING" Then 'Trang thai dang pending. Ban can phai confirm APPROVE/REJECT yeu cau
+                'IsAlreadyExistTransferSwift = True
+                confirmResult = MsgBox("Ban nhan dc mot yeu cau Transfer Swift RefId (" & refIdValue & ")  tu nguoi gui (" & transferFromValue & ") voi trang thai " & transferStatusValue & ". Ban vui long chon action: Yes (Accept) No (Reject)", vbQuestion + vbYesNo)
+                If confirmResult = vbYes Then 'Approve request. Neu ACCEPT, copy 1 row tu SheetChung ve sheetCaNhan & update status = APPROVE
+                    'Doi assign qua cho currentEmployee
+                    RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("M" & idx).Value = employeeName
+                    
+                    'Copy row tu Sheet Chung => Tao 1 row trong sheet CaNhan
+                    RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Activate
+                    RangeCopied = "A" & (LastRowSheetCaNhan + 1) & ":" & "Z" & (LastRowSheetCaNhan + 1) 'Vd A1:Z1
+                    RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Rows(idx).Copy _
+                    Destination:=OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Range(RangeCopied)
+                    
+                    'update status = APPROVE
+                    RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("P" & idx).Value = "APPROVE"
+                    
+                    RemoteFile.Save
+                    OutputFile.Save
+                    MsgBox "Copy thong tin Swift RefId (" & refIdValue & ")  ve file local thanh cong, update status thanh APPROVE thanh cong."
+                    Exit Sub
+                Else 'Reject request
+                    RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("P" & idx).Value = "REJECT"
+                    MsgBox "Ban da REJECT yeu cau Transfer Swift RefId (" & refIdValue & ") . Vui long lien he nguoi gui: " & transferFromValue
+                    Exit Sub
+                End If
+                Exit Sub
+            End If 'End 2.2.1
+            
+            '2.2.2
+            If transferStatusValue = "APPROVE" Then
+                MsgBox "Ban da APPROVE yeu cau Transfer Swift RefId (" & refIdValue & ") nay roi. Vui long lien he nguoi gui: " & transferFromValue
+                Exit Sub
+            End If 'End 2.2.2
+            
+            '2.2.3
+            If transferStatusValue = "REJECT" Then
+                MsgBox "Ban da REJECT yeu cau Transfer Swift RefId (" & refIdValue & ") nay roi. Vui long lien he nguoi gui: " & transferFromValue
+                Exit Sub
+            End If 'End 2.2.3
+            
+            '2.2.4 Bao loi voi nhung status khong xac dinh
+            MsgBox "Dang co 1 Transfer Swift RefId (" & refIdValue & ") duoc gui cho ban voi trang thai " & transferStatusValue & ". Vui long kiem tra va xu ly"
+            Exit Sub
+            
+         End If 'End 2.2
+        
+    Next idx
+    
+    
+    LastRowSheetChung = GetLastRowsBySheetName(RemoteFile, SHEET_SWIFT_CHUNG)
+    LastRowSheetCaNhan = GetLastRowsBySheetName(OutputFile, SHEET_SWIFT_CA_NHAN)
+    'Step3:
+    '3.1 currentEmployee k phai nguoi gui/nguoi nhan (k co 1 Transfer Swift nao da Tao truoc day)
+    '=> Show popup cho phep input refId & ten nguoi nhan
+    Dim nguoiNhan As String
+    nguoiNhan = InputBox("Vui long nhap ten nguoi nhan: ") 'Show popup cho phep input refId & ten nguoi nhan
+    If nguoiNhan <> "" Then
+      'MsgBox "Nguoi nhan la " & nguoiNhan
+    Else
+        MsgBox "Thoat"
+        Exit Sub
+    End If
+    
+    '3.2 Show popup cho phep input refId
+    inputRefId = InputBox("Vui long nhap Ref Id muon transfer")
+    If inputRefId <> "" Then
+      'MsgBox "Input RefId = " & inputRefId
+    Else
+        MsgBox "Thoat"
+        Exit Sub
+    End If
+    
+    foundRefInCaNhan = GetRowIndexByRefId(OutputFile, inputRefId, SHEET_SWIFT_CA_NHAN)
+    foundRefInChung = GetRowIndexByRefId(RemoteFile, inputRefId, SHEET_SWIFT_CHUNG)
+    'Check RefId co hop le (nam trong SheetCaNhan va nam trong Sheet Chung) => k hop le bao loi
+    ''MsgBox "foundRefInCaNhan=" & foundRefInCaNhan
+    ''MsgBox "foundRefInChung=" & foundRefInChung
+    If foundRefInCaNhan = -1 Or foundRefInChung = -1 Then
+        MsgBox "Ref Id (" & inputRefId & ") khong co trong Sheet Ca Nhan hoac khong co trong sheet Chung. Vui long kiem tra lai"
+        Exit Sub
+    End If
+    
+     '3.4 Update value cac cot transferFromValue N, O, P (from, to ,status)
+     RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("N" & foundRefInChung).Value = employeeName
+     RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("O" & foundRefInChung).Value = nguoiNhan
+     RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("P" & foundRefInChung).Value = "PENDING"
+     RemoteFile.Save
+     OutputFile.Save
+     MsgBox "Update Swift RefId (" & inputRefId & ")  trong sheet Chung thanh cong. Nguoi gui " & employeeName & ". Nguoi nhan " & nguoiNhan & ". Trang thai PENDING"
+     Exit Sub
+    
+End Sub
 Sub ButtonGetSwift_Click()
 'khai bao hang` const
 Dim START_ROW_SHEET_INPUT As Integer
@@ -70,6 +255,7 @@ Dim FlagRevertSwift As Boolean
 Dim FlagCheckOutOfWorkHour As Boolean
 Dim FlagLimitSwiftCanGet As Boolean
 Dim HardCodeEmployeeDung As String
+Dim FlagEnableTransferSwift As String: FlagEnableTransferSwift = True
 
 
 'EDIT HERE
@@ -127,11 +313,33 @@ End If
 'check out of working hour
 If FlagCheckOutOfWorkHour = True Then
     Dim isOutOfWorkingValue As Boolean: isOutOfWorkingValue = isOutOfWorkingHour()
-       
       If isOutOfWorkingValue = True Then
             MsgBox "ERROR" & vbCrLf & "Vui long get swift trong thoi gian lam viec 8:00->11:30 hoac 13:00->17:10" & vbCrLf & "Thoat"
             Exit Sub
         End If
+End If
+
+'Enable tinh nang Transfer Swift cho dong nghiep khac
+If FlagEnableTransferSwift = True And employeeName <> HardCodeEmployeeDung Then
+    'Check ban dang co 1 yeu cau transfer swift tu dong nghiep.
+    LastRowSheetChung = GetLastRowsBySheetName(RemoteFile, SHEET_SWIFT_CHUNG)
+    LastRowSheetCaNhan = GetLastRowsBySheetName(OutputFile, SHEET_SWIFT_CA_NHAN)
+    For idx = 2 To LastRowSheetChung
+        transferFromValue = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("N" & idx).Value
+        transferToValue = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("O" & idx).Value
+        transferStatusValue = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("P" & idx).Value
+        refIdValue = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("A" & idx).Value
+        
+        If transferFromValue = employeeName Then
+                MsgBox "Ban da gui di mot yeu cau Transfer Swift RefId=(" & refIdValue & ") cho (" & transferToValue & "). Vui long xy ly."
+                Exit Sub
+        End If
+        
+         If transferToValue = employeeName Then
+                MsgBox "Ban da nhan duoc mot yeu cau Transfer Swift RefId=(" & refIdValue & ") gui tu (" & transferFromValue & "). Vui long xy ly."
+                Exit Sub
+        End If
+    Next idx
 End If
 
 
@@ -259,7 +467,7 @@ NumColumsSheetChung = GetLastColumnsBySheetName(RemoteFile, SHEET_SWIFT_CHUNG, S
 'Loop tung row trong sheet INPUT,
 For i = 1 To NumRowsInput
     Dim isPickedLC As Boolean: isPickedLC = False 'Khai bao var
-   Dim NguoiNhan As String
+   Dim nguoiNhan As String
     cotLValue = OutputFile.Worksheets("INPUT").Cells(i, "L").Value
     'Chi~ lay row cotLValue=SWIFT
     If cotLValue = "SWIFT" Then
@@ -274,7 +482,7 @@ For i = 1 To NumRowsInput
         If RefValue = RefVauleSheetChung Then
             'MsgBox "Info: Ref Id =" & RefValue & "  da co nguoi nhan. Nguoi nhan =" & NguoiNhan
             isPickedLC = True
-            NguoiNhan = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Cells(j, "M").Value
+            nguoiNhan = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Cells(j, "M").Value
         End If
         
       Next j
@@ -356,6 +564,8 @@ RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("A1:T500").Copy
 OutputFile.Sheets(SHEET_SWIFT_CHUNG).Activate
 OutputFile.Sheets(SHEET_SWIFT_CHUNG).Range("A1:T500").PasteSpecial Paste:=xlPasteValuesAndNumberFormats
 MsgBox "INFO: Copy sheet swift chung ve local thanh cong"
+OutputFile.Save
+RemoteFile.Save
 
 'Get swift xong
 MsgBox "INFO: Get swift thanh cong." & vbCrLf & "SWIFT Ref Id = " & SelectedRefSwift
@@ -682,5 +892,6 @@ Sub Button3_Click()
     ActiveWorkbook.Save
     MsgBox "DONE " & totalRows & " rows"
 End Sub
+
 
 ```
