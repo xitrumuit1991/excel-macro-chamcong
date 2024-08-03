@@ -1,3 +1,4 @@
+```
 Sub CheckAndMakeSureSheetNameExistedInRemote(RemoteFile, sheetName)
     ' Add code here
     Dim existsSheetSwiftChung As Boolean
@@ -29,27 +30,25 @@ Function isAllowActionTongHopSwift() As Boolean
     End If
 End Function
 Sub Collect_SWIFT_Cuoi_Ngay_Click()
-        Dim SHEET_TONG_HOP_SWIFT As String: SHEET_TONG_HOP_SWIFT = "SHEET_TONG_HOP_SWIFT"
+        Dim SHEET_2019 As String: SHEET_2019 = "2019"
+        PasswordSheet2019 = "ctxk2"
         Dim SHEET_SWIFT_CHUNG As String: SHEET_SWIFT_CHUNG = "SHEET_SWIFT_CHUNG"
         Dim IsClearSheetSwiftChungAfterCopy As Boolean: IsClearSheetSwiftChungAfterCopy = True
         Dim FlagEnableTimeCheck As Boolean: FlagEnableTimeCheck = False
         Dim RemoteFileSwiftChung As Workbook
         Dim RemoteFileTongHopSwift As Workbook
-        'EDIT HERE
-        'EDIT HERE
+        Dim LastRowSheet2019 As Long
+        
         'EDIT HERE
         PathFileRemoteSwiftChung = "/Users/nguyen/Desktop/remote/remoteFileInDiskX.xlsx" 'File nam o X: EDITABLE
-        PathFileRemoteTongHopSwift = "/Users/nguyen/Desktop/remote/remoteFileTongHopSwift.xlsx" 'File nam o X: EDITABLE
         START_ROW_SHEET_CHUNG = 2 'Edit here
         
         'open file remote
         Set RemoteFileSwiftChung = Workbooks.Open(PathFileRemoteSwiftChung)
-        Set RemoteFileTongHopSwift = Workbooks.Open(PathFileRemoteTongHopSwift)
-        ThisWorkbook.Activate
+        Set OutputFile2019 = ThisWorkbook
+       
+        OutputFile2019.Activate
         
-        
-        'CheckAndMakeSureSheetNameExistedInRemote
-        Call CheckAndMakeSureSheetNameExistedInRemote(RemoteFileTongHopSwift, SHEET_TONG_HOP_SWIFT)
         
         'Confirm action
         ConfirmResult = MsgBox("Xac nhan tong hop Swift cuoi ngay ?", vbQuestion & vbYesNo)
@@ -63,40 +62,67 @@ Sub Collect_SWIFT_Cuoi_Ngay_Click()
         If FlagEnableTimeCheck = True Then
             IsAllowAction = isAllowActionTongHopSwift()
             If IsAllowAction = False Then
-                ThisWorkbook.Activate
+                OutputFile2019.Activate
                 Exit Sub
             End If
         End If
         
+        'tim index row dau tien trong SHeet Chung co ngayGhi cotQ la hom nay (today) "yyyy_MM_dd" string
+        LastRowSheetChung = GetLastRowsBySheetName(RemoteFileSwiftChung, SHEET_SWIFT_CHUNG)
         
+        OutputFile2019.Sheets(SHEET_2019).Unprotect PasswordSheet2019 'unlock sheet
+        LastRowSheet2019 = OutputFile2019.Sheets(SHEET_2019).UsedRange.Rows.Count + 1 ' +1 boi vi row 1 (empty) fucntion UsedRange se khong dem
+        OutputFile2019.Sheets(SHEET_2019).Protect PasswordSheet2019 'lock sheet
+        'MsgBox "LastRowSheet2019 = " & LastRowSheet2019
+        
+        IndexFirstRowToday = -1
+        todayString = Format(Now, "yyyy") & "_" & Format(Now, "MM") & "_" & Format(Now, "dd")
+        For idx = 2 To LastRowSheetChung
+            rowNgayGhi = RemoteFileSwiftChung.Sheets(SHEET_SWIFT_CHUNG).Range("Q" & idx).Value
+            If todayString = rowNgayGhi Then
+                IndexFirstRowToday = idx
+                Exit For
+            End If
+        Next idx
+        'MsgBox "LastRowSheetChung=" & LastRowSheetChung & " LastRowSheetTongHop=" & LastRowSheetTongHop
+        If IndexFirstRowToday = -1 Or IndexFirstRowToday > LastRowSheetChung Then
+            MsgBox "Khong co dong nao de copy"
+            OutputFile2019.Sheets(SHEET_2019).Protect PasswordSheet2019 'lock sheet
+            Exit Sub
+        End If
+        'MsgBox "IndexFirstRowToday = " & IndexFirstRowToday
         
         'Start Copy process
-        LastRowSheetChung = GetLastRowsBySheetName(RemoteFileSwiftChung, SHEET_SWIFT_CHUNG)
-        LastRowSheetTongHop = GetLastRowsBySheetName(RemoteFileTongHopSwift, SHEET_TONG_HOP_SWIFT)
-        'MsgBox "LastRowSheetChung=" & LastRowSheetChung & " LastRowSheetTongHop=" & LastRowSheetTongHop
-        
+        'Copy cot A Sheet chung -> Cot A Sheet 2019
         'Select Range Sheet Chung
-        RemoteFileSwiftChung.Sheets(SHEET_SWIFT_CHUNG).Activate
-        RangeIndexSheetChung = "A" & START_ROW_SHEET_CHUNG & ":P" & LastRowSheetChung
-        MsgBox "Select range copy SheetChung=" & RangeIndexSheetChung
-        RemoteFileSwiftChung.Sheets(SHEET_SWIFT_CHUNG).Range(RangeIndexSheetChung).Select
-        Selection.Copy
+        RangeFromIndex = "A" & IndexFirstRowToday & ":A" & LastRowSheetChung 'A10:A20
+        RangeToIndex = "A" & (LastRowSheet2019 + 1)
+        OutputFile2019.Sheets(SHEET_2019).Unprotect PasswordSheet2019 'unlock sheet
+        RemoteFileSwiftChung.Sheets(SHEET_SWIFT_CHUNG).Range(RangeFromIndex).Copy
+        OutputFile2019.Sheets(SHEET_2019).Range(RangeToIndex).PasteSpecial Paste:=xlPasteValues
+        OutputFile2019.Sheets(SHEET_2019).Protect PasswordSheet2019 'lock sheet
+        MsgBox "Copy Cot A Sheet Chung Range: (" & RangeFromIndex & ") sang cot A Sheet 2019 Range: (" & RangeToIndex & ") thanh cong"
         
-        'Paste
-        RemoteFileTongHopSwift.Sheets(SHEET_TONG_HOP_SWIFT).Activate
-        PasteRangeIndex = "A" & (LastRowSheetTongHop + 1)
-        'MsgBox "Copy to sheet tong hop range=" & PasteRangeIndex
-        RemoteFileTongHopSwift.Sheets(SHEET_TONG_HOP_SWIFT).Range(PasteRangeIndex).PasteSpecial Paste:=xlPasteValuesAndNumberFormats
-        'End copy  process
+        
+         'Copy cot M Sheet chung -> Cot E Sheet 2019
+        'Select Range Sheet Chung
+        RangeFromIndex = "M" & IndexFirstRowToday & ":M" & LastRowSheetChung 'M10:M20
+        RangeToIndex = "E" & (LastRowSheet2019 + 1)
+        OutputFile2019.Sheets(SHEET_2019).Unprotect PasswordSheet2019 'unlock sheet
+        RemoteFileSwiftChung.Sheets(SHEET_SWIFT_CHUNG).Range(RangeFromIndex).Copy
+        OutputFile2019.Sheets(SHEET_2019).Range(RangeToIndex).PasteSpecial Paste:=xlPasteValues
+        OutputFile2019.Sheets(SHEET_2019).Protect PasswordSheet2019 'lock sheet
+        MsgBox "Copy Cot M Sheet Chung Range: (" & RangeFromIndex & ") sang cot E Sheet 2019 Range: (" & RangeToIndex & ") thanh cong"
+        
         
         
          'clear file swift chung sau khi copy thanh cong
         If IsClearSheetSwiftChungAfterCopy = True Then
-           ClearRangeIndex = "A" & START_ROW_SHEET_CHUNG & ":P" & LastRowSheetChung
+           ClearRangeIndex = "A" & IndexFirstRowToday & ":Z" & LastRowSheetChung
            resultYesNo = MsgBox("Copy thanh cong. Ban co muon xoa content cua Sheet Swift Chung khong ?" & vbCrLf & "Range:" & ClearRangeIndex, vbQuestion & vbYesNo)
            If resultYesNo = vbYes Then
                 RemoteFileSwiftChung.Sheets(SHEET_SWIFT_CHUNG).Activate
-                ClearRangeIndex = "A" & START_ROW_SHEET_CHUNG & ":P" & LastRowSheetChung
+                'ClearRangeIndex = "A" & IndexFirstRowToday & ":Z" & LastRowSheetChung
                 'MsgBox "Range se bi xoa: ClearRangeIndex SheetChung=" & ClearRangeIndex
                 RemoteFileSwiftChung.Sheets(SHEET_SWIFT_CHUNG).Range(ClearRangeIndex).Select
                 Selection.ClearContents
@@ -106,10 +132,12 @@ Sub Collect_SWIFT_Cuoi_Ngay_Click()
         
         'Save & exit
         RemoteFileSwiftChung.Save
-        RemoteFileTongHopSwift.Save
         
         'set current active workbook  Activate
-        ThisWorkbook.Activate
+        'ThisWorkbook.Activate
+        OutputFile2019.Sheets(SHEET_2019).Protect PasswordSheet2019 'lock sheet
+        OutputFile2019.Save
+        OutputFile2019.Activate
         
         MsgBox "Tong Hop Swift thanh cong. "
 
@@ -222,3 +250,5 @@ Selection.End(xlDown).Select
 Application.DisplayAlerts = True
 Application.ScreenUpdating = True
 End Sub
+
+```
