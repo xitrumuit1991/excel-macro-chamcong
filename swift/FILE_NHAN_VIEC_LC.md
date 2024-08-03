@@ -1,4 +1,3 @@
-```javascript
 Sub CheckAndMakeSureSheetNameExistedInRemote(RemoteFile, sheetName)
     ' Add code here
     Dim existsSheetSwiftChung As Boolean
@@ -311,6 +310,7 @@ End If
 
 
 'check out of working hour
+FlagCheckOutOfWorkHour = False
 If FlagCheckOutOfWorkHour = True Then
     Dim isOutOfWorkingValue As Boolean: isOutOfWorkingValue = isOutOfWorkingHour()
       If isOutOfWorkingValue = True Then
@@ -434,9 +434,10 @@ MsgBox "Xin chao ban:  " & employeeName & vbCrLf & "Click de bat dau kiem tra tr
     
 'check file remote co dang bi locked k ? Neu co thi bao loi~
 'Loop 5 lan, sleep moi lan 1second
+OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Activate
 For idx = 1 To 5
     Application.StatusBar = "Kiem tra tinh kha dung cua Sheet SHEET_SWIFT_CHUNG trong " & (6 - idx) & " giay"
-    RemoteFile.Sheets(SHEET_SWIFT_CHUNG).Activate
+    'RemoteFile.Sheets(SHEET_SWIFT_CHUNG).Activate
     isLockedRemoteFile = RemoteFile.Sheets(SHEET_SWIFT_CHUNG).Range("A1").Value
     If isLockedRemoteFile = "locked" Then
         MsgBox "File remote dang co nguoi su dung. Vui long thu lai sau"
@@ -450,6 +451,8 @@ Application.StatusBar = "Sheet SHEET_SWIFT_CHUNG san sang de su dung"
 'File chua ai su dung, set locked
 RemoteFile.Sheets(SHEET_SWIFT_CHUNG).Range("A1").Value = "locked"
 RemoteFile.Save
+
+OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Activate 'active lai sheet ca nhan
 
 
 
@@ -535,7 +538,7 @@ End If
 'Cuoi cung lay dc cai row Swift chua co nguoi nhan & co thoi gan tre nhat
 MsgBox "INFO: Tim thay SWIFT : RefId =(" & SelectedRefSwift & "), tai row index = " & SelectedIndexSwift
 
-'Copy RefSwift vao Sheet SHEET_SWIFT_CA_NHAN & Assign Ten Nguoi Nhan
+'Copy RefSwift from INPUT vao Sheet SHEET_SWIFT_CA_NHAN & Assign Ten Nguoi Nhan
 LastRowSheetCaNhan = OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Cells(Cells.Rows.Count, "A").End(xlUp).row + 1
 CellCopiedIndex = "A" & LastRowSheetCaNhan & ":" & "L" & LastRowSheetCaNhan 'Vd A10:L10
 OutputFile.Worksheets("INPUT").Activate
@@ -546,11 +549,14 @@ OutputFile.Save
 'MsgBox "INFO: added new swift into swift local success"
 
 
-'Update/Push RefId Swift vao Sheet SHEET_SWIFT_CHUNG.
+'Update/Push RefId Swift from SHEET_SWIFT_CA_NHAN vao Sheet SHEET_SWIFT_CHUNG.
 LastRowSheetChung = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Cells(Cells.Rows.Count, "A").End(xlUp).row + 1
 RangeForCopiedSheetChung = "A" & LastRowSheetChung & ":" & "M" & LastRowSheetChung 'Vd A10:M10
 OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Rows(LastRowSheetCaNhan).Copy _
 Destination:=RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range(RangeForCopiedSheetChung)
+'Set ngay ghi = today
+todayString = Format(Now, "yyyy") & "_" & Format(Now, "MM") & "_" & Format(Now, "dd")
+RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("Q" & LastRowSheetChung).Value = todayString
 RemoteFile.Save
 'MsgBox "INFO: added new swift into remote file success"
 
@@ -570,7 +576,9 @@ RemoteFile.Save
 'Get swift xong
 MsgBox "INFO: Get swift thanh cong." & vbCrLf & "SWIFT Ref Id = " & SelectedRefSwift
 
-ActiveWorkbook.Save
+'OutputFile.Activate
+OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Activate
+'ActiveWorkbook.Save
 
 End Sub
 Sub Button1_Click()
@@ -892,6 +900,3 @@ Sub Button3_Click()
     ActiveWorkbook.Save
     MsgBox "DONE " & totalRows & " rows"
 End Sub
-
-
-```
