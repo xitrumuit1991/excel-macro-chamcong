@@ -1,4 +1,4 @@
-```java
+```php
 Function IsWorkBookOpen(FileName)
     Dim ff As Long, ErrNo As Long
     
