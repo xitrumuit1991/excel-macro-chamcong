@@ -1,4 +1,4 @@
-```
+```javascript
 Sub CheckAndMakeSureSheetNameExistedInRemote(RemoteFile, sheetName)
     ' Add code here
     Dim existsSheetSwiftChung As Boolean
@@ -33,7 +33,7 @@ Sub Collect_SWIFT_Cuoi_Ngay_Click()
         Dim SHEET_2019 As String: SHEET_2019 = "2019"
         PasswordSheet2019 = "ctxk2"
         Dim SHEET_SWIFT_CHUNG As String: SHEET_SWIFT_CHUNG = "SHEET_SWIFT_CHUNG"
-        Dim IsClearSheetSwiftChungAfterCopy As Boolean: IsClearSheetSwiftChungAfterCopy = True
+        Dim FlagClearSheetSwiftChungAfterCopy As Boolean: FlagClearSheetSwiftChungAfterCopy = False
         Dim FlagEnableTimeCheck As Boolean: FlagEnableTimeCheck = False
         Dim RemoteFileSwiftChung As Workbook
         Dim RemoteFileTongHopSwift As Workbook
@@ -117,7 +117,8 @@ Sub Collect_SWIFT_Cuoi_Ngay_Click()
         
         
          'clear file swift chung sau khi copy thanh cong
-        If IsClearSheetSwiftChungAfterCopy = True Then
+        ' K xoa du lieu Sheet Chung
+        If FlagClearSheetSwiftChungAfterCopy = True Then
            ClearRangeIndex = "A" & IndexFirstRowToday & ":Z" & LastRowSheetChung
            resultYesNo = MsgBox("Copy thanh cong. Ban co muon xoa content cua Sheet Swift Chung khong ?" & vbCrLf & "Range:" & ClearRangeIndex, vbQuestion & vbYesNo)
            If resultYesNo = vbYes Then
