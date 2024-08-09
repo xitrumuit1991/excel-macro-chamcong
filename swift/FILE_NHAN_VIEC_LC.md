@@ -1,4 +1,29 @@
 ```javascript
+Function GetDateFromString(valueDateString, formatString)
+    'Split space char
+    arrDateTime = Split(valueDateString, " ")
+    dateString = arrDateTime(0)
+    timeString = arrDateTime(1)
+    If formatString = "dd/mm/yy" Or formatString = "dd/mm/yyyy" Or formatString = "dd/mm/yy hh:mm:ss" Then
+        arrDates = Split(dateString, "/")
+        dd = arrDates(0)
+        mm = arrDates(1)
+        yyyy = arrDates(2)
+        If Len(yyyy) = 2 Then
+            yyyy = "20" & yyyy
+        End If
+        arrTimes = Split(timeString, ":")
+        hhour = arrTimes(0)
+        mminus = arrTimes(1)
+        ssecond = arrTimes(2)
+        
+        fullDateString = yyyy & "-" & mm & "-" & dd & " " & hhour & ":" & mminus & ":" & ssecond
+        
+        GetDateFromString = CDate(fullDateString)
+    Else
+        GetDateFromString = Now
+    End If
+End Function
 Function IsWorkBookOpen(FileName)
     Dim ff As Long, ErrNo As Long
     
@@ -103,7 +128,7 @@ Function GetRowIndexByRefId(fileWorkbook, refIdString, sheetName) As Integer
     End If
     
     LastRowSwiftCaNhan = fileWorkbook.Worksheets(sheetName).Cells(Cells.Rows.Count, "A").End(xlUp).row
-    For idx = 1 To LastRowSwiftCaNhan
+    For idx = 2 To LastRowSwiftCaNhan
             refIdValue = fileWorkbook.Worksheets(sheetName).Range("A" & idx).Value
             If refIdValue <> "" And refIdString <> "" And refIdValue = refIdString Then
                 foundIdx = idx
@@ -176,7 +201,7 @@ Sub ButtonTraSwift_Click()
     'Step2:
     LastRowSheetChung = GetLastRowsBySheetName(RemoteFile, SHEET_SWIFT_CHUNG)
     LastRowSheetCaNhan = GetLastRowsBySheetName(OutputFile, SHEET_SWIFT_CA_NHAN)
-    For idx = 1 To LastRowSheetChung
+    For idx = 2 To LastRowSheetChung
         transferFromValue = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("N" & idx).Value
         transferToValue = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("O" & idx).Value
         transferStatusValue = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("P" & idx).Value
@@ -358,7 +383,7 @@ PathFileRemote = "/Users/nguyen/Desktop/remote/remoteFileInDiskX.xlsx" 'File nam
 'PathFileRemote = = "X:\088 HSC TTTM\XUAT KHAU\CHIA VIEC 2020/remoteFileInDiskX.xlsx" 'Path of VCB
 
  START_ROW_SHEET_INPUT = 22
- START_ROW_SHEET_CHUNG = 1
+ START_ROW_SHEET_CHUNG = 2
  NUMBER_SWIFT_CAN_GET = 3 'limit swift co the Get ve
  HardCodeEmployeeDung = "LQDUNG" 'Hardcode ten nhan vien cho the revert swift
 
@@ -378,8 +403,8 @@ Dim RevertSwiftRefId As String
 Dim RemoteFile As Workbook
 Dim OutputFile As Workbook 'File nam local
 Dim employeeName As String 'ten nhan vien Sheet INPUT
-Dim SelectedRefSwift As String: SelectedRefSwift = ""
-Dim SelectedIndexSwift As Integer: SelectedIndexSwift = -1
+Dim SelectedRefSwift As String
+Dim SelectedIndexSwift As Integer
 'Set ngay ghi = today
 todayString = Format(Now, "yyyy") & "_" & Format(Now, "MM") & "_" & Format(Now, "dd")
 
@@ -453,7 +478,7 @@ If FlagEnableTransferSwift = True And UCase(employeeName) <> UCase(HardCodeEmplo
     'Check ban dang co 1 yeu cau transfer swift tu dong nghiep.
     LastRowSheetChung = GetLastRowsBySheetName(RemoteFile, SHEET_SWIFT_CHUNG)
     LastRowSheetCaNhan = GetLastRowsBySheetName(OutputFile, SHEET_SWIFT_CA_NHAN)
-    For idx = 1 To LastRowSheetChung
+    For idx = 2 To LastRowSheetChung
         transferFromValue = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("N" & idx).Value
         transferToValue = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("O" & idx).Value
         transferStatusValue = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("P" & idx).Value
@@ -490,14 +515,14 @@ If UCase(employeeName) = UCase(HardCodeEmployeeDung) Then
         IdxFoundInSwiftChung = -1
         LastRowSwiftCaNhan = OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Cells(Cells.Rows.Count, "A").End(xlUp).row
         LastRowSwiftChung = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Cells(Cells.Rows.Count, "A").End(xlUp).row
-        For idx = 1 To LastRowSwiftCaNhan
+        For idx = 2 To LastRowSwiftCaNhan
             RefIdCaNhan = OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Range("A" & idx).Value
             If RefIdCaNhan = RevertSwiftRefId Then
                 IdxFoundInSwiftCaNhan = idx
             End If
         Next idx
         
-        For idx = 1 To LastRowSwiftChung
+        For idx = 2 To LastRowSwiftChung
             RefIdChung = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("A" & idx).Value
             If RefIdChung = RevertSwiftRefId Then
                 IdxFoundInSwiftChung = idx
@@ -543,7 +568,7 @@ If FlagLimitSwiftCanGet = True Then
     LastRowSwiftChung = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Cells(Cells.Rows.Count, "A").End(xlUp).row
     
     ''Loop sheet SWIFT CHUNG
-    For idx = 1 To LastRowSwiftChung
+    For idx = 2 To LastRowSwiftChung
         RefIdCheck = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("A" & idx).Value 'cot A
         AssignerIdCheck = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("M" & idx).Value 'cot M
         ngayGhi = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("Q" & idx).Value 'todayString
@@ -551,7 +576,7 @@ If FlagLimitSwiftCanGet = True Then
          'row nay dang assign current employee & ngayGhi = today
         If AssignerIdCheck = employeeName And ngayGhi = todayString Then
                  'Loop sheet INPUT
-                For idy = 1 To LastRowInput
+                For idy = 2 To LastRowInput
                     RefIdInINPUT = OutputFile.Worksheets("INPUT").Range("A" & idy).Value
                     StatusRefId = OutputFile.Worksheets("INPUT").Range("J" & idy).Value
                     If RefIdCheck = RefIdInINPUT And StatusRefId = "Input" Then
@@ -582,7 +607,7 @@ For idx = 1 To countdownTimeCheck
     
     isLockedRemoteFile = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Range("A1").Value
     If isLockedRemoteFile = "locked" Then
-        MsgBox "File remote dang co nguoi su dung. Vui long thu lai sau"
+        MsgBox "File remote dang co nguoi su dung (A1=locked). Vui long thu lai sau"
         Call CloseRemoteFileAndActiveSheetCaNhan(RemoteFile, OutputFile, SHEET_SWIFT_CA_NHAN)
         Exit Sub 'Thoat khoi chuong trinh
     End If
@@ -609,71 +634,87 @@ NumColumsSheetChung = GetLastColumnsBySheetName(RemoteFile, SHEET_SWIFT_CHUNG, S
 
 'MsgBox "Sheet INPUT: So dong= " & NumRowsInput & " So Cot=" & NumColumsInput & vbCrLf & " Sheet SHEET CHUNG: So dong= " & NumRowsSheetChung & " So Cot=" & NumColumsSheetChung
 
-'START For loop get Swift
-'Loop tung row trong sheet INPUT,
-For i = 1 To NumRowsInput
-    Dim isPickedLC As Boolean: isPickedLC = False 'Khai bao var
+'START
+'START
+'START Loop tung row trong sheet INPUT,
+SelectedRefSwift = ""
+SelectedIndexSwift = -1
+For i = 2 To NumRowsInput
+    Dim isPickedLC As Boolean
     Dim nguoiNhan As String
+    isPickedLC = False 'Khai bao var
     cotLValue = OutputFile.Worksheets("INPUT").Cells(i, "L").Value 'Cot L phai la SWIFT
     cotJValue = OutputFile.Worksheets("INPUT").Cells(i, "J").Value 'Cot J value phai = "Input"
     isNACotLValue = Application.WorksheetFunction.IsNA(cotLValue)
     isNACotJValue = Application.WorksheetFunction.IsNA(cotJValue)
     
-    'Chi~ lay row cotLValue=SWIFT & cotJValue = "Input"
-    If isNACotLValue = False And isNACotJValue = False And cotJValue <> "#N/A" And cotLValue <> "#N/A" And cotLValue = "SWIFT" And cotJValue = "Input" Then
+    'DK de get dc SWIFT: co 3 dk
+    'DK1: cotLValue=SWIFT (sheet INPUT)
+    'DK2: cotJValue = "Input" (sheet INPUT)
+    'DK3: thoi gian nho nhat (thoi gian tinh ca ngay va gio, bao gom ca ngay qua khu)
+    
+    'Check DK1 va DK2: Chi~ lay row cotLValue=SWIFT & cotJValue = "Input"
+    If isNACotLValue = False And isNACotJValue = False And cotJValue <> "#N/A" And cotLValue <> "#N/A" _
+        And cotLValue = "SWIFT" And UCase(cotJValue) = "INPUT" Then
       
       'Lay Ref value
       RefValue = OutputFile.Worksheets("INPUT").Cells(i, "A").Value
       'MsgBox "dong " & i & " la row SWIFT." & " Ref Id = " & RefValue
       
-      'START Loop tung row cua Sheet chung
-      For j = 1 To NumRowsSheetChung
-        RefVauleSheetChung = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Cells(j, "A").Value
-        
-        If RefValue = RefVauleSheetChung Then
-            'MsgBox "Info: Ref Id =" & RefValue & "  da co nguoi nhan. Nguoi nhan =" & NguoiNhan
-            isPickedLC = True
-            nguoiNhan = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Cells(j, "M").Value
-        End If
-        
-      Next j
-     'END Loop tung row cua Sheet chung
+             'START Loop tung row cua Sheet chung
+             For j = 2 To NumRowsSheetChung
+               RefVauleSheetChung = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Cells(j, "A").Value
+               
+               If RefValue = RefVauleSheetChung Then
+                   'MsgBox "Info: Ref Id =" & RefValue & "  da co nguoi nhan. Nguoi nhan =" & NguoiNhan
+                   isPickedLC = True
+                   nguoiNhan = RemoteFile.Worksheets(SHEET_SWIFT_CHUNG).Cells(j, "M").Value
+                   Exit For 'Ref co ng nhan roi, thoat khoi loop for
+               End If
+               
+             Next j
+            'END Loop tung row cua Sheet chung
      
-     If isPickedLC = True Then
-         '----MsgBox "WARN: Ref Id =(" & RefValue & ")  da co nguoi nhan. Nguoi nhan =" & NguoiNhan
-     Else
-        '---MsgBox "INFO: Ref Id =(" & RefValue & ")  chua co ai nhan."
         'Neu Ref cua row nay` chua co nguoi nao nhan^ thi`
-              
-        If Len(SelectedRefSwift) = 0 Or SelectedRefSwift = "" Or SelectedRefSwift = vbNullString Then
-        '* Neu SelectedSwift empty => SelectedSwift = row nay.
-               SelectedRefSwift = RefValue
-               SelectedIndexSwift = i
-               '---MsgBox "INFO: Init first value SelectedRefSwift: refId =(" & SelectedRefSwift & ") And index row= " & SelectedIndexSwift
-        ElseIf SelectedIndexSwift > -1 Then
-            '   * Neu da co' SelectedSwift truoc do => check thoi gian lay cai tre nhat
-            SelectedDateSwift = OutputFile.Worksheets("INPUT").Cells(SelectedIndexSwift, "K").Value
-            SelectedTimestampSwift = DateDiff("s", "1/1/1970 00:00:00", SelectedDateSwift)
-            NewSelectedDateSwift = OutputFile.Worksheets("INPUT").Cells(i, "K").Value
-            NewSelectedTimestampSwift = DateDiff("s", "1/1/1970 00:00:00", NewSelectedDateSwift)
-            
-            'LC nao co thoi gian som nhat (<) thi chon
-            If NewSelectedTimestampSwift < SelectedTimestampSwift Then
-                  '---MsgBox "INFO: New RefId =(" & RefValue & ")  tre hon Old RefId = (" & SelectedRefSwift & "). DateTime  " & NewSelectedDateSwift & " > " & SelectedDateSwift
-                  '---MsgBox "INFO: New RefId =(" & RefValue & ")  tre hon Old RefId = (" & SelectedRefSwift & "). Timestamp " & NewSelectedTimestampSwift & " > " & SelectedTimestampSwift
-                  'Set lai selected swift va index
+        If isPickedLC = False And cotLValue = "SWIFT" And UCase(cotJValue) = "INPUT" Then
+           
+           If SelectedIndexSwift = -1 Then
+           '* Neu SelectedSwift empty => SelectedSwift = row nay.
                   SelectedRefSwift = RefValue
                   SelectedIndexSwift = i
-            End If
-        Else
-           'Nothing todo
-        End If
-         
-        
-     End If
+                  'MsgBox "INFO: Tim thay FIRST Swift refId =(" & SelectedRefSwift & ") And index row= " & SelectedIndexSwift
+           ElseIf SelectedIndexSwift > -1 Then
+               '   * Neu da co' SelectedSwift truoc do => check thoi gian lay cai tre nhat
+               
+               currentSwiftTimeCotK = OutputFile.Worksheets("INPUT").Cells(SelectedIndexSwift, "K").Value
+               newSwiftTimeCotK = OutputFile.Worksheets("INPUT").Cells(i, "K").Value
+               
+               If newSwiftTimeCotK = "" Or IsDate(newSwiftTimeCotK) = False Then
+                    MsgBox "Value " & newSwiftTimeCotK & " tai range K" & i & " khong phai format Date"
+                    Call CloseRemoteFileAndActiveSheetCaNhan(RemoteFile, OutputFile, SHEET_SWIFT_CA_NHAN)
+                    Exit Sub
+               End If
+               
+               newSwiftDate = GetDateFromString(newSwiftTimeCotK, "dd/mm/yy") 'Macro doc value string k dung format => can custom function split string
+               currentSwiftDate = GetDateFromString(currentSwiftTimeCotK, "dd/mm/yy")
+               
+               'MsgBox "INFO: Tim thay OTHER Swift refId =(" & RefValue & ") And index row= " & i & vbCrLf & _
+               '     "Month current = " & Month(currentSwiftDate) & " Day current =" & Day(currentSwiftDate) & vbCrLf & _
+               '      "Month new = " & Month(newSwiftDate) & " Day new =" & Day(newSwiftDate) & vbCrLf & _
+               '      "DateDiff= " & DateDiff("s", newSwiftDate, currentSwiftDate)
+                     
+                'LC nao co thoi gian nho nhat  thi chon
+               If DateDiff("s", newSwiftDate, currentSwiftDate) > 0 Then 'the same newSwiftTimeCotK < currentSwiftTimeCotK
+                        'MsgBox "Ngay newSwiftDate < Ngay currentSwiftDate => chon RefId nay =" & RefValue & ". Row index= " & i
+                       SelectedRefSwift = RefValue
+                       SelectedIndexSwift = i
+               End If
+           End If
+           
+        End If 'End check isPickedLC
      
       
-    End If
+    End If 'End Check cotLValue = "SWIFT" And UCase(cotJValue) = "INPUT"
 Next i
 
 If SelectedIndexSwift = -1 Then
@@ -689,13 +730,15 @@ End If
 
 'Copy RefSwift from INPUT vao Sheet SHEET_SWIFT_CA_NHAN & Assign Ten Nguoi Nhan
 LastRowSheetCaNhan = OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Cells(Cells.Rows.Count, "A").End(xlUp).row + 1
-CellCopiedIndex = "A" & LastRowSheetCaNhan & ":" & "L" & LastRowSheetCaNhan 'Vd A10:L10
-OutputFile.Worksheets("INPUT").Activate
-OutputFile.Worksheets("INPUT").Rows(SelectedIndexSwift).Copy _
-Destination:=OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Range(CellCopiedIndex)
+fromCopyRange = "A" & SelectedIndexSwift & ":Q" & SelectedIndexSwift
+toCopyRange = "A" & LastRowSheetCaNhan & ":Q" & LastRowSheetCaNhan 'Vd A10:L10
+
+OutputFile.Worksheets("INPUT").Range(fromCopyRange).Copy _
+Destination:=OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Range(toCopyRange)
 OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Cells(LastRowSheetCaNhan, "M").Value = employeeName
+OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Cells(LastRowSheetCaNhan, "Q").Value = todayString
 OutputFile.Save
-'MsgBox "INFO: added new swift into swift local success"
+'MsgBox "INFO: added new swift into swift local success. From INPUT range " & fromCopyRange & " to SWIFT CA NHAN range " & toCopyRange
 
 
 'Update/Push RefId Swift from SHEET_SWIFT_CA_NHAN vao Sheet SHEET_SWIFT_CHUNG.
@@ -720,7 +763,7 @@ OutputFile.Worksheets(SHEET_SWIFT_CHUNG).Range("A1:T500").PasteSpecial Paste:=xl
 
 
 'Get swift xong
-MsgBox "INFO: Get swift thanh cong." & vbCrLf & "SWIFT Ref Id = " & SelectedRefSwift
+MsgBox "INFO: Get swift thanh cong." & vbCrLf & "SWIFT Ref Id = " & SelectedRefSwift '& " tai row index = " & SelectedIndexSwift
 
 'OutputFile.Activate
 'OutputFile.Worksheets(SHEET_SWIFT_CA_NHAN).Activate
