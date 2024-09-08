@@ -14,6 +14,7 @@ xuatkhau
 # Password File Chia Viec
 ```
 115599
+xuatkhau
 ```
 
 # Password File Nhan Viec
